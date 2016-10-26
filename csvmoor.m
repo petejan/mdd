@@ -1,5 +1,5 @@
-function dismoor(command)
-% function to display the present mooring elements in the command window
+function csvmoor()
+% function to output the results as a csv file
 
 global moorele H B ME X Y Z Ti iobj jobj psi  % for in-line and mooring elements
 global HCO BCO CdCO mooreleCO ZCO Iobj Jobj Pobj % for clamp-on devices
@@ -12,10 +12,7 @@ moorele=char(moorele); % reset these matrices as character strings
 mooreleCO=char(mooreleCO);
 moorelet=char(moorelet);
 
-if nargin==0,
-   command=0;
-end
-line0='  0                                                                                                             ';
+line0='  0                                                                                                           ';
 if ~isempty(H) & isempty(Ht),
    [mm,nm]=size(moorele);
 else % this is a towed body case
@@ -38,86 +35,63 @@ elseif mz1==nzo,
 end
 clear line
 if ~isempty(H) & isempty(Ht),
-hdr1=' # Mooring Element   Length[m] Buoy[kg] Height[m]    dZ[m]   dX[m]   dY[m]   Tension[kg]   Angle[deg]';
-%     1234567891123456789212345678931234567894123456789512345678961234567897123456789812345678991234567890123
-if isempty(Z),
-hdr2='                                         (top)                               Top  Bottom   Top Bottom';
-   else
-hdr2='                                        (middle)                             Top  Bottom   Top Bottom';
-end
+  printf("No,Mooring Element,Length[m],Buoy[kg],Height[m],dZ[m],dX[m],dY[m],Tension[kg],Tension[kg],Angle[deg],Angle[deg]\n");
+  if isempty(Z),
+    printf(",,,top,,,top,bottom,top,bottom\n");
+  else
+    printf(",,,middle,,,top,bottom,top,bottom\n");
+  end
 else % then this is a towed body solution
-hdr1=' # Towed Element     Length[m] Buoy[kg]  Depth[m]    dZ[m]   dX[m]   dY[m]   Tension[kg]   Angle[deg]';
-%     1234567891123456789212345678931234567894123456789512345678961234567897123456789812345678991234567890123
-if isempty(Z),
-hdr2='                                        (bottom)                             Bottom  Top   Bottom Top';
-   else
-hdr2='                                        (middle)                             Bottom  Top   Bottom Top';
-end
+
+  printf("No,Towed Element,Length[m],Buoy[kg],Depth[m],dZ[m],dX[m],dY[m],Tension[kg],Tension[kg],Angle[deg],Angle[deg]\n");
+  if isempty(Z),
+    printf(",,,bottom,,,bottom,top,bottom,top\n");
+  else
+    printf(",,,top,,,bottom,top,bottom,top\n");
+  end
+  
 end
 
 % first display the In-Line mooring components, then do the Clamp-on, then tally up all components
-if command==1, % then print to printer
-   pf=figure(5);clf
-   axis off
-   fs=8;
-   set(pf,'PaperOrient','Portrait','PaperUnits',...
-      'Normalized','PaperPosition',[0 0 1 1],'Visible','on');
-   dates=num2str(fix(clock),'%3.0f');dates(8)='/';dates([14 17])=':';
-   tit=['Mooring Design and Dynamics  ',dates];
-   ht=title(tit);
-   pos=get(ht,'Position');
-   set(ht,'Position',[pos(1) pos(2)*1.02 pos(3)],'Fontname','Courier New','FontSize',fs*1.2);
-   orient tall
-   ypos=1+3/90;
-   h=text(-0.1,ypos,'   In-Line');
-   set(h,'Units','Normalized','Position',[-0.075 ypos],'Fontname','Courier New','FontSize',fs);
-   ypos=1+2/90;
-   h=text(-0.1,ypos,hdr1);
-   set(h,'Units','Normalized','Position',[-0.075 ypos],'Fontname','Courier New','FontSize',fs);
-   ypos=1+1/90;
-   h=text(-0.1,ypos,hdr2);
-   set(h,'Units','Normalized','Position',[-0.075 ypos],'Fontname','Courier New','FontSize',fs);
- else % display to the command window
-    disp(' ');
-    disp('   In-Line');
-    disp(hdr1);
-    disp(hdr2);
-    refresh
-end
-%
+
 ell=0;
 jo=0;io=0;
 depth=max(z)-sum(H(1,:));
 for el=1:mm,
    ell=ell+1;
    line=line0;
+   printf("%d,%s", el, strtrim(moorele(el,:)));
+   
    tmp=num2str(el);
    line(4-length(tmp):3)=tmp;
-   line(5:21)=moorele(el,:);
+   line(5:20)=moorele(el,:);
    tmp=num2str(H(1,el),'%8.2f');
    if ~isempty(Z) & H(4,el) == 1, % a wire, consider some stretching
       jo=jo+1;
       if (jo+1)>length(jobj);
-        % tmp=num2str(H(1,el)*(1+2*(Ti(jobj(jo))+Ti(jobj(jo)+1))/(pi*H(2,el)^2*ME(el))),'%8.2f');
-        tmp=num2str(H(1,el),'%8.2f');
+        jo
+        printf(",%.2f", H(1,el)*(1+2*(Ti(jobj(jo))+Ti(jobj(jo)+1))/(pi*H(2,el)^2*ME(el))));
+        tmp=num2str(H(1,el)*(1+2*(Ti(jobj(jo))+Ti(jobj(jo)+1))/(pi*H(2,el)^2*ME(el))),'%8.2f');
       else
+        printf(",%.2f", H(1,el)*(1+2*(Ti(jobj(jo))+Ti(jobj(jo)+1))/(pi*H(2,el)^2*ME(el))));
         tmp=num2str(H(1,el)*(1+2*(Ti(jobj(jo))+Ti(jobj(jo+1)+1))/(pi*H(2,el)^2*ME(el))),'%8.2f');
-      end      
+      end 
+   else
+      printf(",%.2f", H(1,el));   
    end
    line(31-length(tmp):30)=tmp;
-   if H(4,el) == 1,
-      tmp=num2str(B(el)*H(1,el),'%8.2f');
-   else
-      tmp=num2str(B(el),'%8.2f');
-   end
-   
+   printf(",%.2f", B(el));
+   tmp=num2str(B(el),'%8.2f');
    line(40-length(tmp):39)=tmp;
+   
    if isempty(Z),
       hght=sum(H(1,el:mm));  % Height at the top of this element
+      printf(",%.2f,,,,,,,", hght);
       tmp=num2str(hght,'%8.2f');
       line(50-length(tmp):49)=tmp;
    elseif ~isempty(Z) & H(4,el) ~=1 & el ~= mm, % this is an instrument/buoy...
       io=io+1;
+      printf(",%.2f,%.2f,%.1f,%.1f,%.1f,%.1f,%.1f,%.1f", Z(iobj(io)),dZ(iobj(io)),X(iobj(io)),Y(iobj(io)),Ti(iobj(io))/9.81,Ti(iobj(io)+1)/9.81,psi(iobj(io))*180/pi,psi(iobj(io)+1)*180/pi);
       tmp=num2str(Z(iobj(io)),'%8.2f');
       line(50-length(tmp):49)=tmp;
       tmp=num2str(dZ(iobj(io)),'%5.1f');
@@ -132,9 +106,10 @@ for el=1:mm,
       line(95-length(tmp):94)=tmp;
       tmp=num2str(Ti(iobj(io)+1)/9.81,'%6.1f');
       line(89-length(tmp):88)=tmp;
-      tmp=num2str(psi(iobj(io)+1)*180/pi,'%4.1f');
+      tmp=num2str(Ti(iobj(io)+1)/9.81,'%4.1f');
       line(101-length(tmp):100)=tmp;
-   elseif ~isempty(Z) & H(4,el) == 1 & (jo+1)>length(jobj), % this is a wire/rope/chain section
+   elseif ~isempty(Z) & H(4,el) == 1, % this is a wire/rope/chain section
+      printf(",,,,,%.1f,%.1f,%.1f,%.1f",Ti(iobj(io))/9.81,Ti(iobj(io)+1)/9.81,psi(iobj(io))*180/pi,psi(iobj(io)+1)*180/pi);
       tmp=num2str(Ti(jobj(jo))/9.81,'%6.1f');
       line(82-length(tmp):81)=tmp;
       tmp=num2str(psi(jobj(jo))*180/pi,'%4.1f');
@@ -147,6 +122,7 @@ for el=1:mm,
    end
    if ~isempty(Z) & el == mm, % this is the anchor
       io=io+1;
+      printf(",%.2f,%.2f,%.2f,%.2f,%.1f,,%.1f,", Z(iobj(io))/2,dZ(iobj(io)),X(iobj(io)),Y(iobj(io)),Ti(iobj(io))/9.81,psi(iobj(io))*180/pi);      
       tmp=num2str(Z(iobj(io))/2,'%8.2f');
       line(50-length(tmp):49)=tmp;
       tmp=num2str(dZ(iobj(io)),'%5.1f');
@@ -161,41 +137,14 @@ for el=1:mm,
       line(95-length(tmp):94)=tmp;
    end
    depth=depth+H(1,el);
+   printf(",%.1f",depth);
+   
    tmp=num2str(depth,'%8.0f');
    line(113-length(tmp):112)=tmp;
 
-   if command==1,
-      figure(5);
-      ypos=1-ell/90;
-      h=text(-0.1,ypos,line);
-      set(h,'Units','normalized','Position',[-0.075 ypos],'FontName','Courier New','FontSize',fs);
-   else
-      disp(line);
-   end
-   if command==1 & ell==80, % for printer output, go to next page
-      ell=1;
-   	figure(5);
-   	orient tall;
-   	unis = get(gcf,'units');
-   	ppos = get(gcf,'paperposition');
-   	set(gcf,'units',get(gcf,'paperunits'));
-   	pos  = get(gcf,'position');
-   	pos(3:4) = ppos(3:4);
-   	set(gcf,'position',pos);
-   	set(gcf,'units',unis);
-      print -f5 -v;
-      clf;axis off
-      orient tall
-	   ypos=1+3/90;
-  		h=text(-0.1,ypos,'   In-Line');
-   	set(h,'Units','Normalized','Position',[-0.075 ypos],'Fontname','Courier New','FontSize',fs);
-   	ypos=1+2/90;
-   	h=text(-0.1,ypos,hdr1);
-   	set(h,'Units','Normalized','Position',[-0.075 ypos],'Fontname','Courier New','FontSize',fs);
-   	ypos=1+1/90;
-   	h=text(-0.1,ypos,hdr2);
-   	set(h,'Units','Normalized','Position',[-0.075 ypos],'Fontname','Courier New','FontSize',fs);
-	end
+   printf("\n");
+
+#   disp(line);
 end;
 
 % now display any Clamp-On devices
@@ -214,27 +163,13 @@ if ~isempty(BCO),mm=length(BCO);end
 if mm>0,
    ellz=ell+2;
    % first display the In-Line mooring components, then do the Clamp-on, then tally up all
-if command==1, % then print to printer
-   ypos=1-ellz/90;
-   h=text(-0.1,ypos,'   Clamp-On Devices');
-   set(h,'Units','Normalized','Position',[-0.075 ypos],'Fontname','Courier New','FontSize',fs);
-   ellz=ellz+1;
-   ypos=1-ellz/90;
-   h=text(-0.1,ypos,hdr1);
-   set(h,'Units','Normalized','Position',[-0.075 ypos],'Fontname','Courier New','FontSize',fs);
-   ellz=ellz+1;
-   ypos=1-ellz/90;
-   h=text(-0.1,ypos,hdr2);
-   set(h,'Units','Normalized','Position',[-0.075 ypos],'Fontname','Courier New','FontSize',fs);
- else % display to the command window
     disp(' ');
     disp('   Clamp-On Devices');
     disp(hdr1);
     disp(hdr2);
-    refresh
-end
+end    
 %
-ell=ellz; %re-initialize the line number
+ell=1; %re-initialize the line number
 for elco=1:mm, % this loops through the clamp-on device list
    el=Jobj(elco); % the number of the mooring element this device is attached to
    io=0;jo=0;
@@ -273,40 +208,11 @@ for elco=1:mm, % this loops through the clamp-on device list
       tmp=num2str(psifco(elco)*180/pi,'%4.1f');
       line(89-length(tmp):88)=tmp;
    end
-   if command==1,
-      figure(5);
-      ypos=1-ell/90;
-      h=text(-0.1,ypos,line);
-      set(h,'Units','normalized','Position',[-0.075 ypos],'FontName','Courier New','FontSize',fs);
-   else
-      disp(line);
-   end
-   if command==1 & ell==80, % for printer output, go to next page
-      ell=1;
-   	figure(5);
-   	orient tall;
-   	unis = get(gcf,'units');
-   	ppos = get(gcf,'paperposition');
-   	set(gcf,'units',get(gcf,'paperunits'));
-   	pos  = get(gcf,'position');
-   	pos(3:4) = ppos(3:4);
-   	set(gcf,'position',pos);
-   	set(gcf,'units',unis);
-      print -f5 -v;
-      clf;axis off
-      orient tall
-	   ypos=1+3/90;
-  		h=text(-0.1,ypos,'   In-Line');
-   	set(h,'Units','Normalized','Position',[-0.075 ypos],'Fontname','Courier New','FontSize',fs);
-   	ypos=1+2/90;
-   	h=text(-0.1,ypos,hdr1);
-   	set(h,'Units','Normalized','Position',[-0.075 ypos],'Fontname','Courier New','FontSize',fs);
-   	ypos=1+1/90;
-   	h=text(-0.1,ypos,hdr2);
-   	set(h,'Units','Normalized','Position',[-0.075 ypos],'Fontname','Courier New','FontSize',fs);
-	end
-end;
+   disp(line);
 end
+
+printf("\n");
+
 % now make a tally of all components
 [mm,nm]=size(moorele);  % start with the in-line components
 moortally=zeros(mm,2);
@@ -363,33 +269,25 @@ if mm>1,
    [mt,nt]=size(moortally);	% mt = number of different mooring components
    if mtco<1, 
       mtco=0;
+      printf("No,element name, total/length\n");
       hdr3=' Tally of all In-Line mooring/tow components by type.';
-   	hdr4=' #    Element Name        Total Number/Length';
+   	  hdr4=' #    Element Name        Total Number/Length';
       %     12345678911234567892123456789312345678941234567895123456789612345678712345678981234567899
    else
       hdr3=' Tally of all In-Line mooring/tow components by type       and       Clamp-on Devices.';
-   	hdr4=' #    Element Name        Total Number/Length          #   Device Name       Total Number';
+   	  hdr4=' #    Element Name        Total Number/Length          #   Device Name       Total Number';
    end
    
-   if command==1,
-      ypos=(mt+2)/90-.1;
-      h=text(-0.1,ypos,hdr3);
-      set(h,'Units','Normalized','Position',[-0.075 ypos],'Fontname','Courier New','FontSize',fs);
-      ypos=(mt+1)/90-.1;
-      h=text(-0.1,ypos,hdr4);
-      set(h,'Units','Normalized','Position',[-0.075 ypos],'Fontname','Courier New','FontSize',fs);
-   else
-      disp(' ');
-      disp(hdr3);
-      disp(hdr4);
-   end
+   #disp(' ');
+   #disp(hdr3);
+   #disp(hdr4);
    ii=0;
    for i=1:mt,
       ii=ii+1; % count for clamp-on devices
       line=line0;
       line(1)=' ';
       line(4-length(num2str(i)):3)=num2str(i);
-      line(6:22)=moorele(moortally(i,1),:);
+      line(6:21)=moorele(moortally(i,1),:);
       line(31-length(num2str(moortally(i,2),6)):30)=num2str(moortally(i,2),6);
       if ii <= mtco,
          line(57-length(num2str(ii)):56)=num2str(ii);
@@ -397,53 +295,24 @@ if mm>1,
          line(87-length(num2str(moortallyco(ii,2))):86)=num2str(moortallyco(ii,2));
       end
       if H(4,moortally(i,1))==1, line(32)='m'; end
-      if command==1,
-         figure(5);
-         ypos=(mt-i)/90-.1;
-         h=text(-0.1,ypos,line);
-         set(h,'Units','normalized','Position',[-0.075 ypos],'FontName','Courier New','FontSize',fs);
-      else
-         disp(line);
-      end
+      printf("%d,%s,%d\n", i, strtrim(moorele(moortally(i,1),:)), moortally(i,2));
+      %disp(line);
    end
    if mtco > mt, % then there are more clamp-on devices than mooring elements
       iii=ii;
       for ii=iii+1:length(BCO),
       	line=line0;
       	line(1)=' ';
-         line(57-length(num2str(ii)):56)=num2str(ii);
-         line(60:75)=mooreleCO(moortallyco(ii,1),:);
-         line(87-length(num2str(moortallyco(ii,2))):86)=num2str(moortally(ii,2));
-      	if command==1,
-      	   figure(5);
-      	   ypos=(mt-i)/90-.1;
-      	   h=text(-0.1,ypos,line);
-      	   set(h,'Units','normalized','Position',[-0.075 ypos],'FontName','Courier New','FontSize',fs);
-      	else
-      	   disp(line);
-      	end
+        line(57-length(num2str(ii)):56)=num2str(ii);
+        line(60:75)=mooreleCO(moortallyco(ii,1),:);
+        line(87-length(num2str(moortallyco(ii,2))):86)=num2str(moortally(ii,2));
+        printf("%s,%d\n", mooreleCO(moortallyco(ii,1)), moortally(ii,2));
+    	  disp(line);
       end
    end
 end
 %
-if command==1,
-   figure(5);
-   orient tall;
-   % wysiwyg
-   unis = get(gcf,'units');
-   ppos = get(gcf,'paperposition');
-   set(gcf,'units',get(gcf,'paperunits'));
-   pos  = get(gcf,'position');
-   pos(3:4) = ppos(3:4);
-   set(gcf,'position',pos);
-   set(gcf,'units',unis);
-   %set(pf,'Visible','off');
-   print -f5 -v;
-   %print -dps MDDout.ps   % if you want a postscript file
-   close(5);
-else
-   disp(' ');
-end
+disp(' ');
 if ~isempty(Ht), moorele=[]; H=[]; B=[]; ME=[]; psi=psisave; end
-drawnow
-end
+
+endfunction

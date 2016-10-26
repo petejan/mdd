@@ -37,6 +37,7 @@ global Iobj
 global nomovie
 global Zoo
 global Zi
+global Qx Qy Qz
 
 iprt=100; % If solution isn't converging, set this to 50-100 and watch to see what's happening.
 

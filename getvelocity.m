@@ -7,12 +7,12 @@ global windspd winddir Usp Vsp uvsp
 global fs
 
 if nargin==0, command=0; end
-if command<40 & (uw^2+vw^2)==0,
+if command<40 & (uw.^2+vw.^2)==0,
    windspd=0;winddir=360;
    uw=windspd*0.02*cos((90-winddir+180)*pi/180);
    vw=windspd*0.02*sin((90-winddir+180)*pi/180);
-elseif command<40 & (uw^2+vw^2)>0,
-   windspd=sqrt(uw^2+vw^2)/0.02;
+elseif command<40 & (uw.^2+vw.^2)>0,
+   windspd=sqrt(uw.^2+vw.^2)/0.02;
    winddir=90-(atan2(vw,uw)*180/pi)+180;
    winddir=mod(winddir,360);
 end
